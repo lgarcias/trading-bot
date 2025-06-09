@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "app1",
+			"path": "../../../../Repo/app1"
+		}
+	],
+	"settings": {
+		"solidity.compileUsingRemoteVersion": "v0.6.12+commit.27d51765"
+	}
+}
