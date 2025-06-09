@@ -1,0 +1,28 @@
+# ------------------------------------------------
+# Entorno virtual de Python
+venv/
+# Archivos compilados de Python
+env/
+__pycache__/
+*.py[cod]
+# Archivos de configuración sensibles (API keys, credenciales)
+.env
+# Logs y archivos temporales
+*.log
+*.tmp
+# IDEs y editores
+.vscode/
+.idea/
+# ------------------------------------------------
+# Puedes crear el archivo con este comando:
+cat > .gitignore << EOL
+venv/
+env/
+__pycache__/
+*.py[cod]
+.env
+*.log
+*.tmp
+.vscode/
+.idea/
+EOL
