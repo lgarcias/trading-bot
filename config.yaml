@@ -1,0 +1,17 @@
+# config.yaml
+
+exchange:
+  name: binance
+  symbol: BTC/USDT
+  timeframe: 1m
+
+strategy:
+  type: sma_cross
+  params:
+    fast: 10
+    slow: 50
+    limit: 100
+
+risk:
+  max_position_size: 0.01   # 1% del balance
+  stop_loss_pct: 0.02       # 2%
