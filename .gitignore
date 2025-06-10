@@ -13,6 +13,7 @@ __pycache__/
 # IDEs y editores
 .vscode/
 .idea/
+app1.code-workspace
 # ------------------------------------------------
 # Puedes crear el archivo con este comando:
 cat > .gitignore << EOL
