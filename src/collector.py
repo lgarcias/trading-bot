@@ -1,10 +1,15 @@
-# collector.py
+"""
+Historical OHLCV data collector module.
+
+This module provides functions to fetch and save historical OHLCV data for backtesting and analysis.
+"""
+
 import ccxt
 import os
 import pandas as pd
 import logging
 
-from src.config import SYMBOL, TIMEFRAME, API_KEY, API_SECRET  # asumimos que config.py expone estas variables
+from src.config import SYMBOL, TIMEFRAME, API_KEY, API_SECRET  # we assume that config.py exposes these variables
 
 logging.basicConfig(
     filename='logs/bot.log',
@@ -13,6 +18,7 @@ logging.basicConfig(
 )
 
 def fetch_ohlcv(symbol, timeframe, limit=100):
+    """Fetch historical OHLCV data from the exchange."""
     exchange = ccxt.binance({
         'apiKey': API_KEY,
         'secret': API_SECRET,
@@ -24,9 +30,25 @@ def fetch_ohlcv(symbol, timeframe, limit=100):
     logging.info(f"Fetched {len(df)} bars")
     return df
 
+def download_ohlcv_to_csv(symbol, timeframe, limit, filename):
+    """
+    Download historical OHLCV data and save it to a CSV file.
+
+    Args:
+        symbol (str): Trading symbol (e.g., 'BTC-USDT')
+        timeframe (str): Timeframe string (e.g., '1m')
+        limit (int): Number of data points to download
+        filename (str): Output CSV file path
+    """
+    df = fetch_ohlcv(symbol, timeframe, limit)
+    df.to_csv(filename, index=False)
+    print(f"Data saved to {filename}")
+
 if __name__ == "__main__":
-    # Ejecuta una prueba rápida usando la configuración
+    # Run a quick test using the configuration
     df = fetch_ohlcv(SYMBOL, TIMEFRAME, limit=10)
-    print(df)               # muestra todo el DataFrame
-    # o bien:
-    # print(df.tail())      # sólo las últimas filas
+    print(df)               # show the entire DataFrame
+    # or:
+    # print(df.tail())      # only the last few rows
+    # Example download for backtesting
+    # download_ohlcv_to_csv(SYMBOL, TIMEFRAME, 1000, "data/historical.csv")
