@@ -1,10 +1,14 @@
-# src/run.py
+"""
+Main entry point for running the trading bot.
+
+This script initializes and starts the trading bot using the configured strategies and parameters.
+"""
 
 from src.collector import fetch_ohlcv
 from src.config import STRAT_PARAMS, SYMBOL, TIMEFRAME
 from src.strategies import get_strategy
 
-STRATEGY_NAME = 'cross_sma'  # o 'cross_ema'
+STRATEGY_NAME = 'cross_sma'  # or 'cross_ema'
 
 def main():
     df = fetch_ohlcv(SYMBOL, TIMEFRAME, limit=100)
@@ -12,8 +16,8 @@ def main():
     sig = strategy(df,
                    fast=STRAT_PARAMS['fast'],
                    slow=STRAT_PARAMS['slow'])
-    print(f"Señal actual: {sig}")
-    # Aquí esperas a la fase de executor para enviar la orden
+    print(f"Current signal: {sig}")
+    # Here you wait for the executor phase to send the order
 
 if __name__ == "__main__":
     main()

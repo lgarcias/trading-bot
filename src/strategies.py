@@ -1,7 +1,13 @@
+"""
+Strategy loader and registry module.
+
+This module provides utilities to dynamically load and manage trading strategies.
+"""
+
 import pandas_ta as ta
 import logging
 
-# Estrategia 1: Cruce de SMAs (cross_sma)
+# Strategy 1: SMA Crossover (cross_sma)
 def cross_sma(df, fast, slow):
     df['sma_fast'] = ta.sma(df['close'], length=fast)
     df['sma_slow'] = ta.sma(df['close'], length=slow)
@@ -18,7 +24,7 @@ def cross_sma(df, fast, slow):
     logging.info("Signal: HOLD (cross_sma)")
     return "HOLD"
 
-# Estrategia 2: Cruce de EMAs (cross_ema)
+# Strategy 2: EMA Crossover (cross_ema)
 def cross_ema(df, fast, slow):
     df['ema_fast'] = ta.ema(df['close'], length=fast)
     df['ema_slow'] = ta.ema(df['close'], length=slow)
@@ -35,11 +41,11 @@ def cross_ema(df, fast, slow):
     logging.info("Signal: HOLD (cross_ema)")
     return "HOLD"
 
-# Fábrica de estrategias
+# Strategy factory
 def get_strategy(name):
     if name == 'cross_sma':
         return cross_sma
     elif name == 'cross_ema':
         return cross_ema
     else:
-        raise ValueError(f"Estrategia desconocida: {name}")
+        raise ValueError(f"Unknown strategy: {name}")
