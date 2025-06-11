@@ -1,17 +1,23 @@
+"""
+Configuration module for trading bot.
+
+This module defines global configuration variables for symbols, timeframes, and strategy parameters.
+"""
+
 # src/config.py
 import os, yaml
 from dotenv import load_dotenv
 
-# 1) Cargar secretos
+# 1) Load secrets
 load_dotenv()
 API_KEY    = os.getenv("API_KEY")
 API_SECRET = os.getenv("API_SECRET")
 
-# 2) Cargar configuración general
+# 2) Load general configuration
 with open("config.yaml", "r", encoding="utf-8") as f:
     cfg = yaml.safe_load(f)
 
-# Ahora puedes usar:
+# Now you can use:
 EXCHANGE = cfg["exchange"]["name"]
 SYMBOL   = cfg["exchange"]["symbol"]
 TIMEFRAME= cfg["exchange"]["timeframe"]
