@@ -1,0 +1,23 @@
+# Configuración específica para la estrategia cross_sma
+
+exchange:
+  name: binance
+  symbol: BTC/USDT
+  timeframe: 1m
+  start_date: 2025-06-01
+  end_date: 2025-06-12
+
+allowed_symbols:
+  - BTC/USDT
+  - ETH/USDT
+
+strategy:
+  type: sma_cross
+  params:
+    fast: 10
+    slow: 50
+    limit: 100
+
+risk:
+  max_position_size: 0.01   # 1% del balance
+  stop_loss_pct: 0.02       # 2%
