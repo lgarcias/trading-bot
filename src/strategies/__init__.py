@@ -1,5 +1,5 @@
-from .cross_sma import cross_sma
-from .cross_ema import cross_ema
+from .cross_sma_func import cross_sma
+from .cross_ema_func import cross_ema
 
 def get_strategy(name):
     if name == 'cross_sma':
