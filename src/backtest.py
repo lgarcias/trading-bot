@@ -54,13 +54,19 @@ if __name__ == "__main__":
     parser.add_argument('--history', type=str, default=None)
     parser.add_argument('--start_date', type=str, default=None)
     parser.add_argument('--end_date', type=str, default=None)
+    parser.add_argument('--fast', type=int, default=STRAT_PARAMS.get('fast', 10))
+    parser.add_argument('--slow', type=int, default=STRAT_PARAMS.get('slow', 50))
+    parser.add_argument('--limit', type=int, default=STRAT_PARAMS.get('limit', 100))
+    parser.add_argument('--max_position_size', type=float, default=STRAT_PARAMS.get('max_position_size', 0.01))
+    parser.add_argument('--stop_loss_pct', type=float, default=STRAT_PARAMS.get('stop_loss_pct', 0.02))
     args = parser.parse_args()
 
     STRATEGY_NAME = args.strategy
     SYMBOL = args.symbol
     TIMEFRAME = args.timeframe
-    fast = STRAT_PARAMS['fast']
-    slow = STRAT_PARAMS['slow']
+    fast = args.fast
+    slow = args.slow
+    # Puedes usar args.limit, args.max_position_size, args.stop_loss_pct según lo requiera tu lógica
 
     HIST_CSV = args.history or "data/historico.csv"
     if os.path.exists(HIST_CSV):
