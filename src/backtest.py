@@ -42,15 +42,27 @@ def backtest_strategy(df: pd.DataFrame, strategy: Callable, fast: int, slow: int
 
 if __name__ == "__main__":
     import sys
+    import argparse
     from src.collector import fetch_ohlcv
     from src.strategies import get_strategy
     from src.config import SYMBOL, TIMEFRAME, STRAT_PARAMS
 
-    HIST_CSV = "data/historico.csv"
-    STRATEGY_NAME = 'cross_sma'  # Change this to select the strategy
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--strategy', type=str, default='cross_sma')
+    parser.add_argument('--symbol', type=str, default=SYMBOL)
+    parser.add_argument('--timeframe', type=str, default=TIMEFRAME)
+    parser.add_argument('--history', type=str, default=None)
+    parser.add_argument('--start_date', type=str, default=None)
+    parser.add_argument('--end_date', type=str, default=None)
+    args = parser.parse_args()
+
+    STRATEGY_NAME = args.strategy
+    SYMBOL = args.symbol
+    TIMEFRAME = args.timeframe
     fast = STRAT_PARAMS['fast']
     slow = STRAT_PARAMS['slow']
 
+    HIST_CSV = args.history or "data/historico.csv"
     if os.path.exists(HIST_CSV):
         print(f"Loading historical data from {HIST_CSV}")
         df = pd.read_csv(HIST_CSV)
@@ -62,11 +74,18 @@ if __name__ == "__main__":
         os.makedirs("data", exist_ok=True)
         df.to_csv(HIST_CSV, index=False)
         print(f"Data saved to {HIST_CSV}")
+    # Filtrar por fechas si se proporcionan
+    if args.start_date:
+        df = df[df['ts'] >= pd.to_datetime(args.start_date)]
+    if args.end_date:
+        df = df[df['ts'] <= pd.to_datetime(args.end_date)]
     strategy = get_strategy(STRATEGY_NAME)
     result = backtest_strategy(df, strategy, fast=fast, slow=slow)
     print(result[['ts','close','signal']].tail(20))
 
     # Save backtest result with descriptive name
-    out_name = f"data/backtest_{STRATEGY_NAME}_{SYMBOL.replace('/', '-')}_{TIMEFRAME}.csv"
+    strategy_dir = os.path.join('data', 'strategies', STRATEGY_NAME)
+    os.makedirs(strategy_dir, exist_ok=True)
+    out_name = os.path.join(strategy_dir, f"backtest_{SYMBOL.replace('/', '-')}_{TIMEFRAME}.csv")
     result.to_csv(out_name, index=False)
     print(f"Backtest saved to {out_name}")
