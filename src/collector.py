@@ -22,6 +22,8 @@ def fetch_ohlcv(symbol, timeframe, limit=100):
     exchange = ccxt.binance({
         'apiKey': API_KEY,
         'secret': API_SECRET,
+        'enableRateLimit': True,
+        'options': {'adjustForTimeDifference': True}
     })
     logging.info(f"Fetching {limit} bars for {symbol} @ {timeframe}")
     data = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)

@@ -32,9 +32,13 @@ os.makedirs(HISTORY_DIR, exist_ok=True)
 
 def get_history_filename(symbol, timeframe, start_date, end_date):
     # Formato: history_SYMBOL_TIMEFRAME_STARTDATE_ENDDATE.csv
+    import re
     s = symbol.replace('/', '-')
-    start = start_date.split('T')[0] if 'T' in start_date else start_date
-    end = end_date.split('T')[0] if 'T' in end_date else end_date
+    def clean_date(dt):
+        # Quitar espacios, dos puntos y otros caracteres no válidos
+        return re.sub(r'[^0-9A-Za-z_-]', '', dt.replace(' ', '_'))
+    start = clean_date(start_date.split('T')[0] if 'T' in start_date else start_date)
+    end = clean_date(end_date.split('T')[0] if 'T' in end_date else end_date)
     return os.path.join(HISTORY_DIR, f"history_{s}_{timeframe}_{start}_{end}.csv")
 
 def normalize_symbol(symbol: str) -> str:
@@ -75,9 +79,22 @@ def run_backtest(req: BacktestRequest):
         ex = config.get('exchange', {})
         min_date = ex.get('start_date')
         max_date = ex.get('end_date')
-        if min_date and start_date and start_date < min_date:
+        # Parsear fechas a datetime.date si es necesario
+        from datetime import datetime
+        def parse_date(d):
+            if isinstance(d, str):
+                try:
+                    return datetime.strptime(d[:10], "%Y-%m-%d").date()
+                except Exception:
+                    return d
+            return d
+        start_date_dt = parse_date(start_date)
+        end_date_dt = parse_date(end_date)
+        min_date_dt = parse_date(min_date)
+        max_date_dt = parse_date(max_date)
+        if min_date and start_date and start_date_dt < min_date_dt:
             return {"success": False, "error": f"Start date {start_date} is before allowed range ({min_date})"}
-        if max_date and end_date and end_date > max_date:
+        if max_date and end_date and end_date_dt > max_date_dt:
             return {"success": False, "error": f"End date {end_date} is after allowed range ({max_date})"}
         # Usar parámetros de la estrategia
         strat_params = config.get('strategy', {}).get('params', {})
@@ -106,10 +123,17 @@ def run_backtest(req: BacktestRequest):
             "data", "strategies", req.strategy,
             f"backtest_{symbol}_{timeframe}.csv"
         )
-        if os.path.exists(out_path):
+        # Refuerzo: comprobar existencia con rutas absolutas y tolerancia a mayúsculas/minúsculas
+        import glob
+        abs_out_path = os.path.abspath(out_path)
+        if os.path.exists(out_path) or os.path.exists(abs_out_path):
             return {"success": True, "result_file": out_path, "stdout": result.stdout}
-        else:
-            return {"success": False, "error": "Backtest completed but result file not found.", "stdout": result.stdout}
+        # Buscar por patrón si hay problemas de nombre
+        pattern = os.path.join("data", "strategies", req.strategy, f"backtest_{symbol.replace('/', '-')}*{timeframe}.csv")
+        matches = glob.glob(pattern)
+        if matches:
+            return {"success": True, "result_file": matches[0], "stdout": result.stdout}
+        return {"success": False, "error": "Backtest completed but result file not found.", "stdout": result.stdout}
     except subprocess.CalledProcessError as e:
         return {"success": False, "error": str(e), "stdout": e.stdout, "stderr": e.stderr}
 
