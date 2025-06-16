@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { apiUrl } from './api';
 
 function ErrorBoundary({ children }) {
   const [error, setError] = React.useState(null);
   if (error) {
     return <div style={{color:'red', background:'#fee', padding:16, border:'1px solid #f00'}}>
-      <b>Error inesperado:</b>
+      <b>Unexpected error:</b>
       <pre style={{whiteSpace:'pre-wrap'}}>{error.toString()}</pre>
     </div>;
   }
@@ -30,7 +31,7 @@ export default function SummaryPage({ onBack }) {
   const [startDate, setStartDate] = React.useState("");
   const [endDate, setEndDate] = React.useState("");
 
-  // Fechas por defecto: 1 de enero de este año y hoy
+  // Default dates: Jan 1st this year and today
   React.useEffect(() => {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -40,13 +41,13 @@ export default function SummaryPage({ onBack }) {
     setEndDate(`${yyyy}-${mm}-${dd} 00:00:00`);
   }, []);
 
-  // Función para obtener el resumen con los filtros actuales
+  // Fetch summary with current filters
   const fetchSummary = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const strategy = window._lastStrategy || 'cross_sma';
-      let url = `http://localhost:8000/summary/${strategy}?`;
+      let url = apiUrl(`/summary/${strategy}?`);
       if (startDate) url += `start_date=${encodeURIComponent(startDate)}&`;
       if (endDate) url += `end_date=${encodeURIComponent(endDate)}&`;
       url = url.replace(/&$/, "");
@@ -56,7 +57,7 @@ export default function SummaryPage({ onBack }) {
       window._lastSummary = data;
       setSummary(data);
     } catch (err) {
-      setError('No se pudo obtener el resumen: ' + err);
+      setError('Could not fetch summary: ' + err);
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ export default function SummaryPage({ onBack }) {
     fetchSummary();
   }, [fetchSummary]);
 
-  // Bloque de debug global
+  // Debug block
   if (typeof window !== 'undefined') {
     window._summaryError = error;
     window._summaryData = summary;
@@ -75,10 +76,10 @@ export default function SummaryPage({ onBack }) {
   return (
     <ErrorBoundary>
       <div className="summary-block">
-        <button onClick={onBack} style={{marginBottom: 16}}>Volver al backtesting</button>
+        <button onClick={onBack} style={{marginBottom: 16}}>Back to Backtest</button>
         <div style={{marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center'}}>
           <label>
-            Fecha inicio:<br/>
+            Start date:<br/>
             <input
               type="datetime-local"
               value={startDate}
@@ -87,7 +88,7 @@ export default function SummaryPage({ onBack }) {
             />
           </label>
           <label>
-            Fecha fin:<br/>
+            End date:<br/>
             <input
               type="datetime-local"
               value={endDate}
@@ -95,21 +96,21 @@ export default function SummaryPage({ onBack }) {
               style={{fontSize: '1em'}}
             />
           </label>
-          <button onClick={fetchSummary} style={{height: 38}}>Filtrar</button>
+          <button onClick={fetchSummary} style={{height: 38}}>Filter</button>
         </div>
-        {loading && <div>Cargando resumen...</div>}
+        {loading && <div>Loading summary...</div>}
         {error && <div style={{color:'red'}}>{error}</div>}
         <textarea
           style={{width:'100%', minHeight:80, fontSize:'0.95em', marginBottom:16, fontFamily:'monospace'}}
           readOnly
-          value={summary ? JSON.stringify(summary, null, 2) : 'No hay datos de resumen.'}
+          value={summary ? JSON.stringify(summary, null, 2) : 'No summary data.'}
         />
         {!loading && !error && (!summary || Object.keys(summary).length === 0) && (
-          <div style={{color:'orange'}}>No hay datos de resumen disponibles.</div>
+          <div style={{color:'orange'}}>No summary data available.</div>
         )}
         {!loading && !error && summary && Object.keys(summary).length > 0 && (
           <>
-            <h2>Resumen cross_sma</h2>
+            <h2>Summary cross_sma</h2>
             <ul>
               <li><b>Total trades:</b> {summary.total_trades}</li>
               <li><b>Total profit/loss:</b> {Number(summary.total_profit).toFixed(2)}</li>
@@ -165,7 +166,7 @@ export default function SummaryPage({ onBack }) {
                   ))}
                 </tbody>
               </table>
-              {Array.isArray(summary.trades) && summary.trades.length > 20 && <div style={{color: '#888', fontSize: '0.9em'}}>Mostrando primeras 20 operaciones...</div>}
+              {Array.isArray(summary.trades) && summary.trades.length > 20 && <div style={{color: '#888', fontSize: '0.9em'}}>Showing first 20 trades...</div>}
             </div>
           </>
         )}
