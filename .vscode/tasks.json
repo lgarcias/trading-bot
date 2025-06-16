@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Uvicorn",
+      "type": "shell",
+      "command": "venv\\Scripts\\uvicorn src.api:app --reload",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "cd frontend; npm run dev",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

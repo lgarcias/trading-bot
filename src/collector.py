@@ -17,17 +17,32 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s'
 )
 
-def fetch_ohlcv(symbol, timeframe, limit=100):
-    """Fetch historical OHLCV data from the exchange."""
+def fetch_ohlcv(symbol, timeframe, limit=100, since=None):
+    """Fetch historical OHLCV data from the exchange with pagination."""
     exchange = ccxt.binance({
         'apiKey': API_KEY,
         'secret': API_SECRET,
+        'enableRateLimit': True,
+        'options': {'adjustForTimeDifference': True}
     })
-    logging.info(f"Fetching {limit} bars for {symbol} @ {timeframe}")
-    data = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-    df = pd.DataFrame(data, columns=['ts','open','high','low','close','volume'])
+    all_data = []
+    max_per_call = exchange.rateLimit if hasattr(exchange, 'rateLimit') else 1000
+    max_per_call = 1000  # Binance max
+    fetched = 0
+    since_ms = int(since.timestamp() * 1000) if since else None
+    while fetched < limit:
+        fetch_limit = min(max_per_call, limit - fetched)
+        data = exchange.fetch_ohlcv(symbol, timeframe=timeframe, since=since_ms, limit=fetch_limit)
+        if not data:
+            break
+        all_data.extend(data)
+        fetched += len(data)
+        if len(data) < fetch_limit:
+            break
+        since_ms = data[-1][0] + 1  # siguiente vela
+    df = pd.DataFrame(all_data, columns=['ts','open','high','low','close','volume'])
     df['ts'] = pd.to_datetime(df['ts'], unit='ms')
-    logging.info(f"Fetched {len(df)} bars")
+    logging.info(f"Fetched {len(df)} bars (paginated)")
     return df
 
 def download_ohlcv_to_csv(symbol, timeframe, limit, filename):

@@ -1,0 +1,191 @@
+/* Reset y base */
+body {
+  background: #fff;
+  color: #222;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.top-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  background: #fff;
+  padding: 20px 0 12px 0;
+  border-bottom: 1px solid #e5e5e5;
+  width: 100%;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.top-nav button {
+  background: #4F8CFF;
+  color: #fff;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(79,140,255,0.07);
+}
+.top-nav button:hover {
+  background: #2563eb;
+}
+
+.backtest-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.backtest-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+.backtest-form input, .backtest-form select {
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+.backtest-form button {
+  background: #4F8CFF;
+  color: #fff;
+  border: none;
+  padding: 8px 22px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+.backtest-form button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+.result {
+  background: #f6f8fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.error {
+  color: #b00020;
+  background: #ffeaea;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+/* Tablas y formularios */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 32px;
+}
+th, td {
+  border: 1px solid #e5e5e5;
+  padding: 10px 8px;
+  text-align: left;
+}
+th {
+  background: #f6f8fa;
+}
+
+form label {
+  margin-right: 18px;
+  font-weight: 500;
+}
+form input, form select {
+  margin-left: 6px;
+  margin-right: 16px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+form button {
+  background: #4F8CFF;
+  color: #fff;
+  border: none;
+  padding: 8px 22px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+form button:hover {
+  background: #2563eb;
+}
+
+@media (max-width: 600px) {
+  .app-container {
+    max-width: 100%;
+    padding: 0 4px;
+  }
+  .top-nav {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0 8px 0;
+  }
+  table, th, td {
+    font-size: 0.95rem;
+  }
+}
