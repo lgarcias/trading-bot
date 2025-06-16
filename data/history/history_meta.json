@@ -1,0 +1,21 @@
+{
+  "BTC/USDT": {
+    "1d": {
+      "filename": "history_BTC-USDT_1d.csv",
+      "min_date": "2025-05-01T00:00:00",
+      "max_date": "2025-06-15T00:00:00"
+    },
+    "1m": {
+      "filename": "history_BTC-USDT_1m.csv",
+      "min_date": "2025-06-15T22:36:00",
+      "max_date": "2025-06-16T00:00:00"
+    }
+  },
+  "ETH/USDT": {
+    "1d": {
+      "filename": "history_ETH-USDT_1d.csv",
+      "min_date": "2025-05-01T00:00:00",
+      "max_date": "2025-06-05T00:00:00"
+    }
+  }
+}
