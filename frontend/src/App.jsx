@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import HomePage from './HomePage';
 import SummaryPage from './SummaryPage';
 import HistoryManagerPage from './HistoryManagerPage';
-import { apiUrl } from './api';
+import BacktestResultPage from './BacktestResultPage';
+import { apiUrl, fetchWithErrorHandling } from './api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 
 const STRATEGIES = [
@@ -14,44 +15,70 @@ const STRATEGIES = [
 
 function BacktestPage() {
   const [strategy, setStrategy] = useState('cross_sma');
-  const [symbol, setSymbol] = useState('BTC/USDT');
-  const [timeframe, setTimeframe] = useState('1m');
+  const [historyList, setHistoryList] = useState({});
+  const [historyOptions, setHistoryOptions] = useState([]);
+  const [selectedHistory, setSelectedHistory] = useState(null);
+  const [symbol, setSymbol] = useState('');
+  const [timeframe, setTimeframe] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [csvRows, setCsvRows] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
-  const [lastStrategy, setLastStrategy] = useState('cross_sma');
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [showError, setShowError] = useState(true);
-  const [historyRange, setHistoryRange] = useState(null);
   const navigate = useNavigate();
 
-  // Al cargar el formulario, obtener el rango de fechas del histórico local
+  // Fetch history list on mount or when strategy changes
   React.useEffect(() => {
-    async function fetchHistoryRange() {
+    async function fetchHistoryList() {
+      setLoading(true);
+      setError(null);
       try {
-        const url = `${apiUrl}/history_range/?strategy=${strategy}&symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}`;
-        const res = await fetch(url);
+        const res = await fetch(apiUrl('/api/history/list'));
         const data = await res.json();
-        if (data.success) {
-          setHistoryRange({ start: data.start_date, end: data.end_date });
-          setStartDate(data.start_date);
-          setEndDate(data.end_date);
+        setHistoryList(data);
+        // Flatten and filter options for the selected strategy
+        let options = [];
+        Object.entries(data).forEach(([symbol, tfs]) => {
+          Object.entries(tfs).forEach(([tf, meta]) => {
+            options.push({
+              symbol,
+              timeframe: tf,
+              ...meta
+            });
+          });
+        });
+        setHistoryOptions(options);
+        if (options.length > 0) {
+          setSelectedHistory(options[0]);
         } else {
-          setHistoryRange(null);
-          setStartDate("");
-          setEndDate("");
+          setSelectedHistory(null);
         }
       } catch (e) {
-        setHistoryRange(null);
-        setStartDate("");
-        setEndDate("");
+        setError('Error loading historical data');
+      } finally {
+        setLoading(false);
       }
     }
-    fetchHistoryRange();
-  }, [strategy, symbol, timeframe]);
+    fetchHistoryList();
+  }, [strategy]);
+
+  // Update fields when selectedHistory changes
+  React.useEffect(() => {
+    if (selectedHistory) {
+      setSymbol(selectedHistory.symbol);
+      setTimeframe(selectedHistory.timeframe);
+      setStartDate(selectedHistory.min_date?.slice(0, 10) || '');
+      setEndDate(selectedHistory.max_date?.slice(0, 10) || '');
+    } else {
+      setSymbol('');
+      setTimeframe('');
+      setStartDate('');
+      setEndDate('');
+    }
+  }, [selectedHistory]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,82 +95,39 @@ function BacktestPage() {
     // Usar solo la parte de fecha (YYYY-MM-DD)
     const start_date = startDate.slice(0, 10);
     const end_date = endDate.slice(0, 10);
-    // Comprobar si el rango solicitado está cubierto por el histórico local
-    if (historyRange) {
-      const histStart = historyRange.start.slice(0, 10);
-      const histEnd = historyRange.end.slice(0, 10);
-      if (start_date < histStart || end_date > histEnd) {
-        if (!window.confirm('The selected date range is not available locally. Download new historical data?')) {
-          setLoading(false);
-          return;
-        }
-        // Descargar nuevos datos históricos
-        const body = { strategy, symbol, timeframe, start_date, end_date };
-        const downloadRes = await fetch(apiUrl('/download_history/'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const downloadData = await downloadRes.json();
-        if (!downloadData.success) {
-          setError(downloadData.error || 'Error downloading historical data');
-          setLoading(false);
-          return;
-        }
-        // Actualizar el rango local tras descargar
-        setHistoryRange({ start: start_date, end: end_date });
-      }
-    }
     try {
-      const body = { strategy, symbol, timeframe, start_date, end_date };
-      const res = await fetch(apiUrl('/backtest/'), {
+      const body = {
+        strategy,
+        symbol: selectedHistory.symbol,
+        timeframe: selectedHistory.timeframe,
+        filename: selectedHistory.filename, // Pass the exact file
+        start_date,
+        end_date
+      };
+      const data = await fetchWithErrorHandling(apiUrl('/api/backtest/'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      if (res.status === 422) {
-        const data = await res.json();
-        if (data.detail && Array.isArray(data.detail)) {
-          setError(data.detail.map(d => d.msg).join(' | '));
-        } else {
-          setError('Validation error');
-        }
-        return;
-      }
-      const data = await res.json();
       if (data.success) {
-        setResult(data);
-        setLastStrategy(strategy);
-        window._lastStrategy = strategy;
-        setShowSummary(true);
-      } else if (data.error && data.error.includes('No historical data')) {
-        if (window.confirm('No historical data for this period. Download from exchange?')) {
-          const downloadRes = await fetch(apiUrl('/download_history/'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-          const downloadData = await downloadRes.json();
-          if (downloadData.success) {
-            await handleSubmit(e);
-            return;
-          } else {
-            setError(downloadData.error || 'Error downloading historical data');
+        navigate('/backtest/result', {
+          state: {
+            summary: data.summary || null,
+            rawStdout: data.stdout || 'No summary available',
+            strategy,
+            historyFile: data.result_file || ''
           }
-        }
+        });
+        return;
       } else {
         setError(data.error || 'Unknown error');
       }
     } catch (err) {
-      setError('Error connecting to backend');
+      setError(err.message || 'Error connecting to backend');
     } finally {
       setLoading(false);
     }
   };
-
-  if (showSummary) {
-    return <SummaryPage onBack={() => setShowSummary(false)} />;
-  }
 
   return (
     <div className="app-container">
@@ -154,7 +138,7 @@ function BacktestPage() {
         </div>
       )}
       <h1>Crypto Bot Backtesting</h1>
-      <form onSubmit={handleSubmit} className="backtest-form">
+      <form className="backtest-form" onSubmit={handleSubmit}>
         <label>
           Strategy:
           <select value={strategy} onChange={e => setStrategy(e.target.value)}>
@@ -163,52 +147,58 @@ function BacktestPage() {
             ))}
           </select>
         </label>
-        <label>
-          Symbol:
-          <input value={symbol} onChange={e => setSymbol(e.target.value)} />
-        </label>
-        <label>
-          Timeframe:
-          <input value={timeframe} onChange={e => setTimeframe(e.target.value)} />
-        </label>
-        <label>
-          Start date:
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        </label>
-        <label>
-          End date:
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        </label>
-        <button type="submit" disabled={loading || !startDate || !endDate}>{loading ? 'Running...' : 'Run Backtest'}</button>
-      </form>
-      <button style={{marginTop: 16}} onClick={() => navigate('/')}>Volver a Inicio</button>
-      {result && (
-        <div className="result">
-          <h2>Resultado</h2>
-          <p><b>Archivo generado:</b> {result.result_file}</p>
-          <pre style={{maxHeight: 300, overflow: 'auto'}}>{result.stdout}</pre>
-          {csvRows && (
-            <div style={{overflowX: 'auto', marginTop: 16}}>
-              <h3>Vista previa del CSV</h3>
-              <table style={{width: '100%', fontSize: '0.95em', borderCollapse: 'collapse'}}>
-                <thead>
-                  <tr>
-                    {csvRows[0].map((col, i) => <th key={i} style={{borderBottom: '1px solid #ccc', textAlign: 'left', padding: 4}}>{col}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvRows.slice(1, 21).map((row, i) => (
-                    <tr key={i}>
-                      {row.map((cell, j) => <td key={j} style={{padding: 4, borderBottom: '1px solid #eee'}}>{cell}</td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {csvRows.length > 21 && <div style={{color: '#888', fontSize: '0.9em'}}>Mostrando primeras 20 filas...</div>}
-            </div>
-          )}
+        {historyOptions.length > 0 ? (
+          <label>
+            Historical Data:
+            <select value={selectedHistory ? `${selectedHistory.symbol}|${selectedHistory.timeframe}` : ''}
+              onChange={e => {
+                const [sym, tf] = e.target.value.split('|');
+                const found = historyOptions.find(opt => opt.symbol === sym && opt.timeframe === tf);
+                setSelectedHistory(found);
+              }}>
+              {historyOptions.map(opt => (
+                <option key={opt.symbol + '|' + opt.timeframe} value={opt.symbol + '|' + opt.timeframe}>
+                  {opt.symbol} - {opt.timeframe} ({opt.min_date?.slice(0,10)} to {opt.max_date?.slice(0,10)})
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <div style={{color: 'red', margin: '16px 0'}}>No historical data available for backtesting. Please generate data first.</div>
+        )}
+        {/* Group symbol and timeframe in one row */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block' }}>Symbol:
+              <input value={symbol} disabled style={{ background: '#f5f5f5', width: '100%' }} />
+            </label>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block' }}>Timeframe:
+              <input value={timeframe} disabled style={{ background: '#f5f5f5', width: '100%' }} />
+            </label>
+          </div>
         </div>
-      )}
+        {/* Group dates in one row */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block' }}>Start date:
+              <input type="date" value={startDate} disabled style={{ background: '#f5f5f5', width: '100%' }} />
+            </label>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block' }}>End date:
+              <input type="date" value={endDate} disabled style={{ background: '#f5f5f5', width: '100%' }} />
+            </label>
+          </div>
+        </div>
+        {historyOptions.length > 0 && (
+          <style>{`
+            .backtest-form select { background: #fff !important; }
+          `}</style>
+        )}
+        <button type="submit" disabled={loading || !selectedHistory}>{loading ? 'Running...' : 'Run Backtest'}</button>
+      </form>
     </div>
   );
 }
@@ -218,7 +208,7 @@ function TopNav() {
   return (
     <nav className="top-nav">
       <button onClick={() => navigate('/')}>Home</button>
-      <button onClick={() => navigate('/summary')}>Summary</button>
+      <button onClick={() => navigate('/backtest')}>Backtest</button>
       <button onClick={() => navigate('/history')}>Historical Data</button>
     </nav>
   );
@@ -234,6 +224,7 @@ function App() {
           <Route path="/summary" element={<SummaryPage />} />
           <Route path="/history" element={<HistoryManagerPage />} />
           <Route path="/backtest" element={<BacktestPage />} />
+          <Route path="/backtest/result" element={<BacktestResultPage />} />
         </Routes>
       </div>
     </Router>

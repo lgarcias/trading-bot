@@ -50,6 +50,7 @@ class BacktestRequest(BaseModel):
     timeframe: str
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    filename: Optional[str] = None  # New: allow frontend to specify the exact file
     # Optional: add more params as needed
 
 class HistoryDownloadRequest(BaseModel):
@@ -71,7 +72,7 @@ def load_strategy_config(strategy: str):
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
-@app.post("/backtest/")
+@app.post("/api/backtest/")
 def run_backtest(req: BacktestRequest):
     """
     Run the backtest for the given strategy, symbol, timeframe, and date range.
@@ -80,6 +81,7 @@ def run_backtest(req: BacktestRequest):
     timeframe = req.timeframe
     start_date = getattr(req, 'start_date', None)
     end_date = getattr(req, 'end_date', None)
+    filename = getattr(req, 'filename', None)
     # Validate config of the strategy
     config = load_strategy_config(req.strategy)
     extra_args = []
@@ -98,22 +100,50 @@ def run_backtest(req: BacktestRequest):
             extra_args += [f"--{k}", str(v)]
     if not (start_date and end_date):
         return {"success": False, "error": "Start and end date required"}
-    hist_file = get_history_filename(symbol, timeframe)
-    meta_file = get_history_meta_filename(symbol, timeframe)
-    if not os.path.exists(hist_file) or not os.path.exists(meta_file):
-        return {"success": False, "error": f"No historical data for that period: {hist_file}"}
-    # Validate that the requested range is covered by the local history (according to meta.json)
+    # Use the filename if provided, else compute it
+    if filename:
+        hist_file = os.path.join(HISTORY_DIR, filename)
+    else:
+        hist_file = get_history_filename(symbol, timeframe)
+    meta_path = os.path.join(HISTORY_DIR, 'history_meta.json')
+    import logging
+    abs_hist_file = os.path.abspath(hist_file)
+    test_exists = os.path.exists(hist_file)
+    test_read = False
+    read_error = None
     try:
-        with open(meta_file, 'r', encoding='utf-8') as f:
-            meta = json.load(f)
-        min_hist = meta.get('start_date')
-        max_hist = meta.get('end_date')
-        req_start = start_date[:10]
-        req_end = end_date[:10]
-        if req_start < min_hist or req_end > max_hist:
-            return {"success": False, "error": f"Requested range {req_start} to {req_end} is outside local history range ({min_hist} to {max_hist})"}
+        with open(hist_file, 'r', encoding='utf-8') as f:
+            f.readline()
+            test_read = True
     except Exception as e:
-        return {"success": False, "error": f"Error reading meta file: {e}"}
+        read_error = str(e)
+        logging.warning(f"[BACKTEST] Error reading file: {e}")
+    if not test_exists:
+        detail = {
+            "file": abs_hist_file,
+            "exists": test_exists,
+            "readable": test_read,
+            "read_error": read_error
+        }
+        raise HTTPException(status_code=404, detail={"msg": "Historical data file not found or not readable", **detail})
+    # Use global meta
+    if not os.path.exists(meta_path):
+        raise HTTPException(status_code=404, detail={"msg": "Global history_meta.json not found", "file": os.path.abspath(meta_path)})
+    with open(meta_path, 'r', encoding='utf-8') as f:
+        meta = json.load(f)
+    # Find info for symbol/timeframe
+    symbol_meta = meta.get(symbol)
+    if not symbol_meta:
+        raise HTTPException(status_code=404, detail={"msg": f"No meta info for symbol {symbol}", "symbol": symbol})
+    tf_meta = symbol_meta.get(timeframe)
+    if not tf_meta:
+        raise HTTPException(status_code=404, detail={"msg": f"No meta info for timeframe {timeframe} in symbol {symbol}", "symbol": symbol, "timeframe": timeframe})
+    min_hist = tf_meta.get('min_date')
+    max_hist = tf_meta.get('max_date')
+    req_start = start_date[:10]
+    req_end = end_date[:10]
+    if req_start < min_hist[:10] or req_end > max_hist[:10]:
+        raise HTTPException(status_code=400, detail={"msg": f"Requested range {req_start} to {req_end} is outside local history range ({min_hist} to {max_hist})"})
     # Call the backtest with the correct historical file and parameters
     cmd = [
         sys.executable, "-m", "src.backtest",
@@ -132,12 +162,40 @@ def run_backtest(req: BacktestRequest):
         import glob
         abs_out_path = os.path.abspath(out_path)
         if os.path.exists(out_path) or os.path.exists(abs_out_path):
-            return {"success": True, "result_file": out_path, "stdout": result.stdout}
+            # Buscar y devolver el resumen JSON si existe
+            summary_path = out_path.replace('.csv', '_summary.json')
+            summary = None
+            if os.path.exists(summary_path):
+                try:
+                    with open(summary_path, 'r', encoding='utf-8') as f:
+                        summary = json.load(f)
+                except Exception as e:
+                    summary = None
+            return {
+                "success": True,
+                "result_file": out_path,
+                "stdout": result.stdout,
+                "summary": summary
+            }
         # Search by pattern if there are naming issues
         pattern = os.path.join("data", "strategies", req.strategy, f"backtest_{symbol.replace('/', '-')}*{timeframe}.csv")
         matches = glob.glob(pattern)
         if matches:
-            return {"success": True, "result_file": matches[0], "stdout": result.stdout}
+            # Buscar y devolver el resumen JSON si existe para el primer match
+            summary_path = matches[0].replace('.csv', '_summary.json')
+            summary = None
+            if os.path.exists(summary_path):
+                try:
+                    with open(summary_path, 'r', encoding='utf-8') as f:
+                        summary = json.load(f)
+                except Exception as e:
+                    summary = None
+            return {
+                "success": True,
+                "result_file": matches[0],
+                "stdout": result.stdout,
+                "summary": summary
+            }
         return {"success": False, "error": "Backtest completed but result file not found.", "stdout": result.stdout}
     except subprocess.CalledProcessError as e:
         return {"success": False, "error": str(e), "stdout": e.stdout, "stderr": e.stderr}
