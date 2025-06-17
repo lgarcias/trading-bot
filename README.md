@@ -85,10 +85,9 @@ $env:PYTHONPATH="."; pytest --maxfail=2 --disable-warnings -v
 ```
 Los tests de API están en `tests/test_api.py` y cubren los endpoints principales.
 
-## Adding a New Strategy
-1. Crea una nueva función en `src/strategies/<your_strategy>_func.py`.
-2. Opcionalmente, añade una subcarpeta en `src/strategies/` para scripts y análisis.
-3. Registra y prueba tu estrategia como en los ejemplos.
+## Strategy Development Guide
+
+- [How to Create and Configure a New Strategy](STRATEGY_GUIDE.md)
 
 ## Data & Results
 - Todos los datos generados y resultados de backtest se almacenan en `data/strategies/<strategy>/`.
