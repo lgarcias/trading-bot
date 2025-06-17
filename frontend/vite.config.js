@@ -5,9 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    historyApiFallback: true, // Permite SPA fallback en desarrollo
     proxy: {
-      '/history': 'http://localhost:8000',
-      '/backtest': 'http://localhost:8000',
+      '/api': 'http://localhost:8000', // Solo proxyea las rutas de API
       // añade aquí más rutas si tu backend expone otras
     }
   }
