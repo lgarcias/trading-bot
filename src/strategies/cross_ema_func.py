@@ -4,6 +4,7 @@ EMA crossover trading strategy implementation.
 This module provides the cross_ema function to generate trading signals based on exponential moving average crossovers.
 """
 
+import src.monkeypatch_numpy  # Debe ir antes de pandas_ta
 import pandas_ta as ta
 import logging
 import math

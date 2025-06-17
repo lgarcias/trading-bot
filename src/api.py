@@ -67,7 +67,8 @@ def run_backtest(req: BacktestRequest):
     """
     Run the backtest for the given strategy, symbol, timeframe, and date range.
     """
-    symbol = req.symbol
+    # Normalizar símbolo a formato con barra para la API
+    symbol = req.symbol.replace('-', '/')
     timeframe = req.timeframe
     start_date = getattr(req, 'start_date', None)
     end_date = getattr(req, 'end_date', None)
@@ -263,6 +264,8 @@ def download_history(
     end_date: str = Body(..., example="2024-01-31T23:59:00Z"),
     force_extend: bool = Body(False, example=False)
 ):
+    # Normalizar símbolo a formato con barra para la API
+    symbol = symbol.replace('-', '/')
     """Download historical data, save to file, and update meta JSON. No permite crear gaps: si el rango solicitado no es adyacente, sugiere el rango correcto y requiere confirmación."""
     filename = HistoryManager.get_history_file(symbol, timeframe)
     meta = HistoryManager.get_meta(symbol, timeframe)

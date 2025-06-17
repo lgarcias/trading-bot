@@ -7,4 +7,5 @@ def get_strategy(name):
     elif name == 'cross_ema':
         return cross_ema
     else:
-        raise ValueError(f"Estrategia desconocida: {name}")
+        # Always raise the error in English for test compatibility
+        raise ValueError(f"Unknown strategy: {name}")
