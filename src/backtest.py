@@ -14,6 +14,7 @@ from src import monkeypatch_numpy
 import os
 import pandas as pd
 from typing import Callable, List
+import logging
 
 def backtest_strategy(df: pd.DataFrame, strategy: Callable, fast: int, slow: int) -> pd.DataFrame:
     """
@@ -70,16 +71,16 @@ if __name__ == "__main__":
 
     HIST_CSV = args.history or "data/historico.csv"
     if os.path.exists(HIST_CSV):
-        print(f"Loading historical data from {HIST_CSV}")
+        logging.info(f"Loading historical data from {HIST_CSV}")
         df = pd.read_csv(HIST_CSV)
         if 'ts' in df.columns:
             df['ts'] = pd.to_datetime(df['ts'])
     else:
-        print("Downloading historical data...")
+        logging.info("Downloading historical data...")
         df = fetch_ohlcv(SYMBOL, TIMEFRAME, limit=200)
         os.makedirs("data", exist_ok=True)
         df.to_csv(HIST_CSV, index=False)
-        print(f"Data saved to {HIST_CSV}")
+        logging.info(f"Data saved to {HIST_CSV}")
     # Filtrar por fechas si se proporcionan
     if args.start_date:
         df = df[df['ts'] >= pd.to_datetime(args.start_date)]
@@ -87,14 +88,14 @@ if __name__ == "__main__":
         df = df[df['ts'] <= pd.to_datetime(args.end_date)]
     strategy = get_strategy(STRATEGY_NAME)
     result = backtest_strategy(df, strategy, fast=fast, slow=slow)
-    print(result[['ts','close','signal']].tail(20))
+    # logging.debug(result[['ts','close','signal']].tail(20))
 
     # Save backtest result with descriptive name
     strategy_dir = os.path.join('data', 'strategies', STRATEGY_NAME)
     os.makedirs(strategy_dir, exist_ok=True)
     out_name = os.path.join(strategy_dir, f"backtest_{SYMBOL.replace('/', '-')}_{TIMEFRAME}.csv")
     result.to_csv(out_name, index=False)
-    print(f"Backtest saved to {out_name}")
+    logging.info(f"Backtest saved to {out_name}")
 
     # === NUEVO: Guardar resumen JSON ===
     import numpy as np
@@ -157,4 +158,4 @@ if __name__ == "__main__":
     summary_name = out_name.replace('.csv', '_summary.json')
     with open(summary_name, 'w', encoding='utf-8') as f:
         json.dump(summary, f, ensure_ascii=False, indent=2, default=str)
-    print(f"Summary saved to {summary_name}")
+    logging.info(f"Summary saved to {summary_name}")
