@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiUrl } from "./api";
 
 function HistoryManagerPage() {
+  // State variables
   const [historyList, setHistoryList] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,10 +14,12 @@ function HistoryManagerPage() {
   });
   const [downloading, setDownloading] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
+  const [pendingExtend, setPendingExtend] = useState(null);
 
+  // Fetch the list of available historicals
   const fetchHistory = () => {
     setLoading(true);
-    fetch(apiUrl("/history/list"))
+    fetch(apiUrl("/api/history/list"))
       .then((res) => res.json())
       .then((data) => {
         setHistoryList(data);
@@ -32,6 +35,7 @@ function HistoryManagerPage() {
     fetchHistory();
   }, []);
 
+  // Show wait cursor while downloading
   useEffect(() => {
     if (downloading) {
       document.body.style.cursor = 'wait';
@@ -41,53 +45,80 @@ function HistoryManagerPage() {
     return () => { document.body.style.cursor = ''; };
   }, [downloading]);
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleDownload = async (e) => {
-    e.preventDefault();
+  // Handle download request, including force-extend logic
+  const handleDownload = async (e, overrideExtend = false, suggested = null) => {
+    e && e.preventDefault();
     setDownloading(true);
     setActionMsg("");
     setError(null);
+    setPendingExtend(null);
+    let body = { ...form };
+    if (overrideExtend && suggested) {
+      body = {
+        ...body,
+        start_date: suggested.suggested_start_date.split("T")[0],
+        end_date: suggested.suggested_end_date.split("T")[0],
+        force_extend: true
+      };
+    }
     try {
-      const res = await fetch(apiUrl("/history/download"), {
+      const res = await fetch(apiUrl("/api/history/download"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.success) {
-        setActionMsg("Historical downloaded successfully.");
+        setActionMsg("Historical data downloaded successfully.");
         fetchHistory();
+      } else if (data.force_extend_param) {
+        // Show suggestion to extend the range
+        setPendingExtend(data);
+        setError(
+          <span>
+            {data.error}<br />
+            <b>Current range:</b> {data.current_min_date} to {data.current_max_date}<br />
+            <b>Suggested range:</b> {data.suggested_start_date} to {data.suggested_end_date}<br />
+            Do you want to extend the download to cover the full range without gaps?
+            <br />
+            <button onClick={() => handleDownload(null, true, data)} disabled={downloading}>Yes, extend and download</button>
+            <button onClick={() => setPendingExtend(null)} disabled={downloading}>No, cancel</button>
+          </span>
+        );
       } else {
         setError(data.error || "Download failed");
       }
     } catch (err) {
-      setError("Error downloading historical");
+      setError("Error downloading historical data");
     }
     setDownloading(false);
   };
 
+  // Handle delete request
   const handleDelete = async (symbol, timeframe) => {
     setActionMsg("");
     setError(null);
     try {
-      // Codifica el símbolo para la URL (BTC/USDT -> BTC%2FUSDT)
-      const res = await fetch(apiUrl(`/history/${encodeURIComponent(symbol)}/${timeframe}`), { method: "DELETE" });
+      // Encode symbol for URL (BTC/USDT -> BTC%2FUSDT)
+      const res = await fetch(apiUrl(`/api/history/${encodeURIComponent(symbol)}/${timeframe}`), { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        setActionMsg("Historical deleted.");
+        setActionMsg("Historical data deleted.");
         fetchHistory();
       } else {
         setError(data.error || "Delete failed");
-        // Si el error es que no existe, forzar refresco de la tabla
+        // If not found, force table refresh
         if (data.error && data.error.includes('not found')) {
           fetchHistory();
         }
       }
     } catch (err) {
-      setError("Error deleting historical");
+      setError("Error deleting historical data");
     }
   };
 
@@ -150,6 +181,14 @@ function HistoryManagerPage() {
           )}
         </tbody>
       </table>
+      {pendingExtend && (
+        <div className="extend-suggestion" style={{ marginTop: 24, padding: 16, border: '1px solid #ccc', borderRadius: 4 }}>
+          <p><strong>Suggested range extension:</strong></p>
+          <p>{pendingExtend.suggested_start_date} to {pendingExtend.suggested_end_date}</p>
+          <button onClick={() => handleDownload(null, true, pendingExtend)} disabled={downloading}>Accept extension</button>
+          <button onClick={() => setPendingExtend(null)} disabled={downloading}>Cancel</button>
+        </div>
+      )}
     </div>
   );
 }
