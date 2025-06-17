@@ -4,8 +4,11 @@ Strategy loader and registry module.
 This module provides utilities to dynamically load and manage trading strategies.
 """
 
+# If pandas_ta is used, ensure numpy.NaN is available for compatibility
+# This monkeypatch is required because some pandas_ta indicators expect np.NaN to exist
 import pandas_ta as ta
 import logging
+import src.monkeypatch_numpy  # Ensures np.NaN exists if pandas_ta is used
 
 # Strategy 1: SMA Crossover (cross_sma)
 def cross_sma(df, fast, slow):
@@ -48,4 +51,5 @@ def get_strategy(name):
     elif name == 'cross_ema':
         return cross_ema
     else:
+        # Always raise the error in English for test compatibility
         raise ValueError(f"Unknown strategy: {name}")
