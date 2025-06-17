@@ -7,8 +7,8 @@
     },
     "1m": {
       "filename": "history_BTC-USDT_1m.csv",
-      "min_date": "2025-06-15T22:36:00",
-      "max_date": "2025-06-16T00:00:00"
+      "min_date": "2025-06-01T00:00:00",
+      "max_date": "2025-06-16T23:56:00"
     },
     "5m": {
       "filename": "history_BTC-USDT_5m.csv",
