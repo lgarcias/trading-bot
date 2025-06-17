@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiUrl } from "./api";
+import { apiUrl, fetchWithErrorHandling } from "./api";
 
 function HistoryManagerPage() {
   // State variables
@@ -17,18 +17,17 @@ function HistoryManagerPage() {
   const [pendingExtend, setPendingExtend] = useState(null);
 
   // Fetch the list of available historicals
-  const fetchHistory = () => {
+  const fetchHistory = async () => {
     setLoading(true);
-    fetch(apiUrl("/api/history/list"))
-      .then((res) => res.json())
-      .then((data) => {
-        setHistoryList(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Error loading history list");
-        setLoading(false);
-      });
+    setError(null);
+    try {
+      const data = await fetchWithErrorHandling(apiUrl("/api/history/list"));
+      setHistoryList(data);
+    } catch (err) {
+      setError("Error loading history list: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -67,12 +66,11 @@ function HistoryManagerPage() {
       };
     }
     try {
-      const res = await fetch(apiUrl("/api/history/download"), {
+      const data = await fetchWithErrorHandling(apiUrl("/api/history/download"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-      const data = await res.json();
       if (data.success) {
         setActionMsg("Historical data downloaded successfully.");
         fetchHistory();
@@ -94,7 +92,7 @@ function HistoryManagerPage() {
         setError(data.error || "Download failed");
       }
     } catch (err) {
-      setError("Error downloading historical data");
+      setError("Error downloading historical data: " + err.message);
     }
     setDownloading(false);
   };
@@ -105,8 +103,7 @@ function HistoryManagerPage() {
     setError(null);
     try {
       // Encode symbol for URL (BTC/USDT -> BTC%2FUSDT)
-      const res = await fetch(apiUrl(`/api/history/${encodeURIComponent(symbol)}/${timeframe}`), { method: "DELETE" });
-      const data = await res.json();
+      const data = await fetchWithErrorHandling(apiUrl(`/api/history/${encodeURIComponent(symbol)}/${timeframe}`), { method: "DELETE" });
       if (data.success) {
         setActionMsg("Historical data deleted.");
         fetchHistory();
@@ -118,7 +115,7 @@ function HistoryManagerPage() {
         }
       }
     } catch (err) {
-      setError("Error deleting historical data");
+      setError("Error deleting historical data: " + err.message);
     }
   };
 

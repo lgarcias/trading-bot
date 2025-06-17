@@ -6,3 +6,20 @@ export function apiUrl(path) {
   if (path.startsWith('http')) return path;
   return `${API_BASE}${path}`;
 }
+
+// Utility to handle fetch with error handling (migrated from App.jsx)
+export async function fetchWithErrorHandling(url, options = {}) {
+  const res = await fetch(url, options);
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    data = null;
+  }
+  if (!res.ok) {
+    // Prefer detail if present (FastAPI error), else status text
+    const errorMsg = (data && data.detail && (typeof data.detail === 'string' ? data.detail : data.detail.msg)) || res.statusText || 'Unknown error';
+    throw new Error(errorMsg);
+  }
+  return data;
+}
