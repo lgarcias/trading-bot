@@ -95,3 +95,66 @@ if __name__ == "__main__":
     out_name = os.path.join(strategy_dir, f"backtest_{SYMBOL.replace('/', '-')}_{TIMEFRAME}.csv")
     result.to_csv(out_name, index=False)
     print(f"Backtest saved to {out_name}")
+
+    # === NUEVO: Guardar resumen JSON ===
+    import numpy as np
+    import json
+    summary = {}
+    # Emparejar señales BUY/SELL para calcular trades completos
+    trades_list = []
+    open_trade = None
+    for idx, row in result.iterrows():
+        if row['signal'] == 'BUY' and open_trade is None:
+            open_trade = {
+                'entry_time': str(row['ts']),
+                'entry_price': float(row['close']),
+                'entry_idx': idx
+            }
+        elif row['signal'] == 'SELL' and open_trade is not None:
+            trade = {
+                'entry_time': open_trade['entry_time'],
+                'entry_price': open_trade['entry_price'],
+                'exit_time': str(row['ts']),
+                'exit_price': float(row['close']),
+                'profit': float(row['close']) - open_trade['entry_price']
+            }
+            trades_list.append(trade)
+            open_trade = None
+    # Si queda una operación abierta al final, la ignoramos (o podrías cerrarla al último precio)
+    summary['total_trades'] = len(trades_list)
+    summary['start_date'] = str(result['ts'].iloc[0]) if not result.empty else None
+    summary['end_date'] = str(result['ts'].iloc[-1]) if not result.empty else None
+    summary['symbol'] = SYMBOL
+    summary['timeframe'] = TIMEFRAME
+    summary['strategy'] = STRATEGY_NAME
+    # Equity curve: acumulado de profits
+    equity_curve = np.cumsum([t['profit'] for t in trades_list]).tolist() if trades_list else []
+    summary['equity_curve'] = equity_curve
+    # Drawdown
+    if equity_curve:
+        peak = np.maximum.accumulate(equity_curve)
+        drawdown = (np.array(equity_curve) - peak).tolist()
+        summary['drawdown_curve'] = drawdown
+        summary['max_drawdown'] = float(np.min(drawdown))
+    else:
+        summary['drawdown_curve'] = []
+        summary['max_drawdown'] = 0.0
+    # Ganancia/pérdida total
+    summary['total_profit'] = float(np.sum([t['profit'] for t in trades_list])) if trades_list else 0.0
+    # Guardar los primeros 20 trades para tabla
+    summary['trades'] = trades_list[:20]
+    # Parámetros de la estrategia
+    summary['strategy_params'] = {
+        'fast': fast,
+        'slow': slow,
+        'limit': getattr(args, 'limit', None),
+        'max_position_size': getattr(args, 'max_position_size', None),
+        'stop_loss_pct': getattr(args, 'stop_loss_pct', None),
+        'start_date': getattr(args, 'start_date', None),
+        'end_date': getattr(args, 'end_date', None)
+    }
+    # Guardar el resumen JSON
+    summary_name = out_name.replace('.csv', '_summary.json')
+    with open(summary_name, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, ensure_ascii=False, indent=2, default=str)
+    print(f"Summary saved to {summary_name}")

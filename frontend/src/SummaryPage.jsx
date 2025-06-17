@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
-import { apiUrl } from './api';
+import { apiUrl, fetchWithErrorHandling } from './api';
 
 function ErrorBoundary({ children }) {
   const [error, setError] = React.useState(null);
@@ -47,17 +47,15 @@ export default function SummaryPage({ onBack }) {
     setError(null);
     try {
       const strategy = window._lastStrategy || 'cross_sma';
-      let url = apiUrl(`/summary/${strategy}?`);
+      let url = apiUrl(`/api/summary/${strategy}?`);
       if (startDate) url += `start_date=${encodeURIComponent(startDate)}&`;
       if (endDate) url += `end_date=${encodeURIComponent(endDate)}&`;
       url = url.replace(/&$/, "");
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('No summary');
-      const data = await res.json();
+      const data = await fetchWithErrorHandling(url);
       window._lastSummary = data;
       setSummary(data);
     } catch (err) {
-      setError('Could not fetch summary: ' + err);
+      setError('Could not fetch summary: ' + err.message);
     } finally {
       setLoading(false);
     }
