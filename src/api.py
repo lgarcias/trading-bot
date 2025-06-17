@@ -8,10 +8,7 @@ import subprocess
 import os
 import sys
 from typing import Optional
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
-import traceback
 import yaml
 import json
 
@@ -26,9 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Expose the data/ folder as static files for the frontend (optional, can be removed)
-# app.mount("/data", StaticFiles(directory="data"), name="data")
-
 HISTORY_DIR = os.path.join("data", "history")
 os.makedirs(HISTORY_DIR, exist_ok=True)
 
@@ -39,10 +33,6 @@ def get_history_filename(symbol, timeframe):
 def get_history_meta_filename(symbol, timeframe):
     s = symbol.replace('/', '-')
     return os.path.join(HISTORY_DIR, f"history_{s}_{timeframe}.meta.json")
-
-def normalize_symbol(symbol: str) -> str:
-    """No longer needed, symbols are now always with slash."""
-    return symbol
 
 class BacktestRequest(BaseModel):
     strategy: str
@@ -452,9 +442,7 @@ try:
     from src.collector import download_ohlcv_to_csv, fetch_ohlcv
 except Exception:
     print("Error importing collector:", file=sys.stderr)
-    traceback.print_exc()
 try:
     from src.history_manager import HistoryManager
 except Exception:
     print("Error importing history_manager:", file=sys.stderr)
-    traceback.print_exc()
