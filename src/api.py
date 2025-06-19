@@ -8,10 +8,7 @@ import subprocess
 import os
 import sys
 from typing import Optional
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
-import traceback
 import yaml
 import json
 
@@ -26,9 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Expose the data/ folder as static files for the frontend (optional, can be removed)
-# app.mount("/data", StaticFiles(directory="data"), name="data")
-
 HISTORY_DIR = os.path.join("data", "history")
 os.makedirs(HISTORY_DIR, exist_ok=True)
 
@@ -39,10 +33,6 @@ def get_history_filename(symbol, timeframe):
 def get_history_meta_filename(symbol, timeframe):
     s = symbol.replace('/', '-')
     return os.path.join(HISTORY_DIR, f"history_{s}_{timeframe}.meta.json")
-
-def normalize_symbol(symbol: str) -> str:
-    """No longer needed, symbols are now always with slash."""
-    return symbol
 
 class BacktestRequest(BaseModel):
     strategy: str
@@ -77,7 +67,8 @@ def run_backtest(req: BacktestRequest):
     """
     Run the backtest for the given strategy, symbol, timeframe, and date range.
     """
-    symbol = req.symbol
+    # Normalizar símbolo a formato con barra para la API
+    symbol = req.symbol.replace('-', '/')
     timeframe = req.timeframe
     start_date = getattr(req, 'start_date', None)
     end_date = getattr(req, 'end_date', None)
@@ -273,6 +264,8 @@ def download_history(
     end_date: str = Body(..., example="2024-01-31T23:59:00Z"),
     force_extend: bool = Body(False, example=False)
 ):
+    # Normalizar símbolo a formato con barra para la API
+    symbol = symbol.replace('-', '/')
     """Download historical data, save to file, and update meta JSON. No permite crear gaps: si el rango solicitado no es adyacente, sugiere el rango correcto y requiere confirmación."""
     filename = HistoryManager.get_history_file(symbol, timeframe)
     meta = HistoryManager.get_meta(symbol, timeframe)
@@ -452,9 +445,7 @@ try:
     from src.collector import download_ohlcv_to_csv, fetch_ohlcv
 except Exception:
     print("Error importing collector:", file=sys.stderr)
-    traceback.print_exc()
 try:
     from src.history_manager import HistoryManager
 except Exception:
     print("Error importing history_manager:", file=sys.stderr)
-    traceback.print_exc()
