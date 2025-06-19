@@ -3,9 +3,9 @@
 A modular Python framework (FastAPI backend + React frontend) for developing, testing, and running algorithmic trading strategies on historical OHLCV data.
 
 ## Features
-- Modular strategy system: add new strategies easily in `src/strategies/`.
+- Modular strategy system: easily add new strategies in `src/strategies/`.
 - Backtesting engine with CSV input/output.
-- Robust historical data management (incremental, paginated, meta global, API & frontend integration).
+- Robust historical data management (incremental, paginated, global meta, API & frontend integration).
 - Organized results and data per strategy in `data/strategies/<strategy>/`.
 - Modern React frontend (Vite) for history management and usability.
 - Pytest-based unit testing for strategies, core modules, and API endpoints.
@@ -63,46 +63,46 @@ uvicorn src.api:app --reload
 cd frontend
 npm run dev
 ```
-Esto levantará el frontend en http://localhost:5173 y el backend en http://localhost:8000. El proxy de Vite redirige automáticamente las rutas `/api` al backend.
+This will start the frontend at http://localhost:5173 and the backend at http://localhost:8000. The Vite proxy automatically redirects `/api` routes to the backend.
 
-### 5. Gestión de históricos desde el frontend
-- Accede a la página de gestión de históricos desde el menú superior.
-- Puedes listar, descargar (incremental y paginado), borrar y consultar históricos y meta global.
-- Todo se realiza vía los endpoints `/api/history/...`.
+### 5. Manage historical data from the frontend
+- Access the history management page from the top menu.
+- You can list, download (incremental and paginated), delete, and view historical data and global meta.
+- All actions are performed via `/api/history/...` endpoints.
 
-### 6. Endpoints principales de la API
-- `/api/history/list` — Lista todos los históricos y sus rangos.
-- `/api/history/meta` — Devuelve el meta global de históricos.
-- `/api/history/download` — Descarga incremental de históricos.
-- `/api/history/{symbol}/{timeframe}` (DELETE) — Borra un histórico.
-- `/api/history/range/` — Consulta el rango disponible para un histórico.
-- `/backtest/` — Ejecuta un backtest.
+### 6. Main API Endpoints
+- `/api/history/list` — List all historical datasets and their ranges.
+- `/api/history/meta` — Returns the global meta for historical data.
+- `/api/history/download` — Incremental download of historical data.
+- `/api/history/{symbol}/{timeframe}` (DELETE) — Delete a historical dataset.
+- `/api/history/range/` — Query the available range for a dataset.
+- `/backtest/` — Run a backtest.
 
 ### 7. Run tests
-Ver `tests/README_TESTS.md` para detalles. Ejemplo:
+See `tests/README_TESTS.md` for details. Example:
 ```
 $env:PYTHONPATH="."; pytest --maxfail=2 --disable-warnings -v
 ```
-Los tests de API están en `tests/test_api.py` y cubren los endpoints principales.
+API tests are in `tests/test_api.py` and cover the main endpoints.
 
 ## Strategy Development Guide
 
 - [How to Create and Configure a New Strategy](STRATEGY_GUIDE.md)
 
 ## Data & Results
-- Todos los datos generados y resultados de backtest se almacenan en `data/strategies/<strategy>/`.
-- El directorio `data/` está excluido de git por defecto.
+- All generated data and backtest results are stored in `data/strategies/<strategy>/`.
+- The `data/` directory is excluded from git by default.
 
 ## License
 MIT
 
 ---
 
-## Production deployment note (Single Page Application routing)
+## Production Deployment Note (Single Page Application Routing)
 
-Si despliegas el frontend en producción (nginx, Apache, cloud static host), configura tu servidor para servir `index.html` para todas las rutas que **no** empiecen por `/api`. Así, el refresco o acceso directo a cualquier ruta SPA funcionará correctamente.
+If you deploy the frontend in production (nginx, Apache, cloud static host), configure your server to serve `index.html` for all routes that **do not** start with `/api`. This ensures that refreshing or directly accessing any SPA route works correctly.
 
-**Ejemplo nginx config:**
+**Example nginx config:**
 ```nginx
 location /api {
   proxy_pass http://localhost:8000;
@@ -112,36 +112,39 @@ location / {
 }
 ```
 
-**Para otros servidores o cloud hosts**, busca la opción "SPA fallback" o "history API fallback" y actívala para tu build frontend.
+**For other servers or cloud hosts**, look for the "SPA fallback" or "history API fallback" option and enable it for your frontend build.
 
-Las rutas de API (solo `/api/...`) deben ser proxyeadas o ruteadas al backend.
+API routes (only `/api/...`) should be proxied or routed to the backend.
 
 ---
 
-## 📄 Roadmap Paper Trading
+## 📄 Paper Trading Roadmap
 
-Consulta el plan y diseño del sistema de paper trading en el [Paper Trading Bot: Roadmap & Design](docs/Paper-Trading-Bot-Roadmap.md).
+See the plan and design for the paper trading system in [Paper Trading Bot: Roadmap & Design](docs/Paper-Trading-Bot-Roadmap.md).
 
-## 🚀 Migración a Docker
+## 🚀 Docker Migration Guide
 
-Consulta la guía para contenerizar y desplegar el proyecto en [Migracion-a-Docker.md](docs/Migracion-a-Docker.md).
+See the guide for containerizing and deploying the project in [Migracion-a-Docker.md](docs/Migracion-a-Docker.md).
 
-## 🐳 Entorno Docker y Dev Container (recomendado)
+## 🐳 Docker & Dev Container Environment (Recommended)
 
-Este proyecto está preparado para funcionar de forma óptima en un entorno Dockerizado usando Dev Containers de VS Code.
+This project is optimized to run in a Dockerized environment using VS Code Dev Containers.
 
-- **No necesitas instalar dependencias manualmente**: Al abrir el proyecto en VS Code y seleccionar "Reopen in Container", todo se instala automáticamente.
-- **Sin conflictos de versiones ni problemas de permisos**: El contenedor ya incluye Python, Node, dependencias y extensiones necesarias.
-- **Acceso a la app:**
+- **No need to install dependencies manually**: When you open the project in VS Code and select "Reopen in Container", everything is installed automatically.
+- **No version conflicts or permission issues**: The container already includes Python, Node, dependencies, and required extensions.
+- **App access:**
   - Frontend: [http://localhost:5173](http://localhost:5173)
   - Backend (Swagger UI): [http://localhost:8000/docs](http://localhost:8000/docs)
-- **¿No usas el contenedor?** Puedes seguir las instrucciones manuales más abajo.
+- **Not using the container?** You can follow the manual instructions below.
 
-Para detalles completos y solución de problemas, consulta la guía:
+For full details and troubleshooting, see the guide:
 [docs/Entorno-Docker-y-DevContainer.md](docs/Entorno-Docker-y-DevContainer.md)
 
-## Devcontainer: workspaceFolder automático
+## Devcontainer: Automatic workspaceFolder
 
-El archivo `.devcontainer/devcontainer.json` está configurado para que el directorio de trabajo sea `/app` y el volumen se monte ahí. Si tras un rebuild el valor de `workspaceFolder` cambia, se corrige automáticamente gracias al script `.devcontainer/fix_workspacefolder.py`, que se ejecuta tras cada rebuild mediante el campo `postCreateCommand`.
+The `.devcontainer/devcontainer.json` file is configured so that the working directory is `/app` and the volume is mounted there. If after a rebuild the value of `workspaceFolder` changes, it is automatically fixed by the script `.devcontainer/fix_workspacefolder.py`, which runs after each rebuild via the `postCreateCommand` field.
 
-No necesitas hacer nada manualmente: si el valor vuelve a `/workspace`, el script lo corregirá a `/app`.
+---
+
+## 🗄️ PostgreSQL Integration Roadmap
+See [`docs/Postgres-Integration-Roadmap.md`](docs/Postgres-Integration-Roadmap.md) for a step-by-step plan to add PostgreSQL support to the app. This document explains how to migrate from file-based storage to a robust database backend, what changes are needed, and what future improvements are possible.
