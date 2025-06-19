@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true, // Permite acceso externo al servidor Vite
     historyApiFallback: true, // Permite SPA fallback en desarrollo
     proxy: {
       '/api': 'http://localhost:8000', // Solo proxyea las rutas de API

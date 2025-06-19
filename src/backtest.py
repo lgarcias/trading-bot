@@ -10,7 +10,6 @@ Typical usage (as a module):
     from src.backtest import backtest_strategy
     result = backtest_strategy(df, strategy, fast, slow)
 """
-from src import monkeypatch_numpy
 import os
 import pandas as pd
 from typing import Callable, List
