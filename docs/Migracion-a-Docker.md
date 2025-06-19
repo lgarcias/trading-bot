@@ -1,62 +1,62 @@
-# Plan de migración del proyecto a Docker
+# Project Migration Plan to Docker
 
-## Objetivo
+## Objective
 
-Contenerizar toda la aplicación (backend, frontend y base de datos) usando Docker y Docker Compose para facilitar el despliegue, la portabilidad y el desarrollo local y en producción.
+Containerize the entire application (backend, frontend, and database) using Docker and Docker Compose to facilitate deployment, portability, and both local and production development.
 
 ---
 
-## Pasos para la migración
+## Migration Steps
 
-### 1. Instalación de Docker y Docker Compose
+### 1. Install Docker and Docker Compose
 
 - **Windows/Mac:**
-  - Descargar e instalar Docker Desktop: https://www.docker.com/products/docker-desktop
+  - Download and install Docker Desktop: https://www.docker.com/products/docker-desktop
 - **Linux:**
-  - Instalar Docker Engine y Docker Compose:
+  - Install Docker Engine and Docker Compose:
     ```sh
     sudo apt update
     sudo apt install docker.io docker-compose -y
     sudo systemctl enable --now docker
     sudo usermod -aG docker $USER
-    # Cierra sesión y vuelve a entrar para aplicar el grupo
+    # Log out and log back in to apply the group
     ```
 
-### 2. Crear el `Dockerfile` para el backend
-- Define cómo construir la imagen de tu backend (FastAPI, etc.).
-- Incluye dependencias, copia el código y expón el puerto necesario.
+### 2. Create the `Dockerfile` for the backend
+- Define how to build your backend image (FastAPI, etc.).
+- Include dependencies, copy the code, and expose the required port.
 
-### 3. Crear el `Dockerfile` para el frontend (opcional)
-- Si tienes frontend React, crea un Dockerfile para servirlo (por ejemplo, con nginx o node).
+### 3. Create the `Dockerfile` for the frontend (optional)
+- If you have a React frontend, create a Dockerfile to serve it (e.g., with nginx or node).
 
-### 4. Crear el archivo `docker-compose.yml`
-- Orquesta los servicios: backend, frontend (opcional) y base de datos (PostgreSQL recomendado).
-- Define variables de entorno, volúmenes y redes.
+### 4. Create the `docker-compose.yml` file
+- Orchestrate the services: backend, frontend (optional), and database (PostgreSQL recommended).
+- Define environment variables, volumes, and networks.
 
-### 5. Configurar variables de entorno
-- Usa archivos `.env` para credenciales y configuración sensible.
-- No subas `.env` a git.
+### 5. Configure environment variables
+- Use `.env` files for credentials and sensitive configuration.
+- Do not commit `.env` files to git.
 
-### 6. Adaptar la app para leer la configuración de entorno
-- Asegúrate de que la app lee las variables de entorno para la conexión a la base de datos y otros servicios.
+### 6. Adapt the app to read environment configuration
+- Ensure the app reads environment variables for database connection and other services.
 
-### 7. Probar el entorno en local
-- Levanta todo con:
+### 7. Test the environment locally
+- Start everything with:
   ```sh
   docker-compose up --build
   ```
-- Accede a la app y verifica que todo funciona.
+- Access the app and verify that everything works.
 
-### 8. Documentar el flujo de trabajo en Docker
-- Cómo desarrollar, testear y desplegar usando Docker.
-- Cómo acceder a la base de datos y logs.
-
----
-
-## Recursos útiles
-- [Documentación oficial de Docker](https://docs.docker.com/)
-- [Documentación oficial de Docker Compose](https://docs.docker.com/compose/)
+### 8. Document the Docker workflow
+- How to develop, test, and deploy using Docker.
+- How to access the database and logs.
 
 ---
 
-**Este documento servirá como guía para migrar y mantener el proyecto en Docker.**
+## Useful Resources
+- [Official Docker Documentation](https://docs.docker.com/)
+- [Official Docker Compose Documentation](https://docs.docker.com/compose/)
+
+---
+
+**This document serves as a guide to migrate and maintain the project in Docker.**
