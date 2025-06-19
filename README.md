@@ -117,3 +117,31 @@ location / {
 Las rutas de API (solo `/api/...`) deben ser proxyeadas o ruteadas al backend.
 
 ---
+
+## 📄 Roadmap Paper Trading
+
+Consulta el plan y diseño del sistema de paper trading en el [Paper Trading Bot: Roadmap & Design](docs/Paper-Trading-Bot-Roadmap.md).
+
+## 🚀 Migración a Docker
+
+Consulta la guía para contenerizar y desplegar el proyecto en [Migracion-a-Docker.md](docs/Migracion-a-Docker.md).
+
+## 🐳 Entorno Docker y Dev Container (recomendado)
+
+Este proyecto está preparado para funcionar de forma óptima en un entorno Dockerizado usando Dev Containers de VS Code.
+
+- **No necesitas instalar dependencias manualmente**: Al abrir el proyecto en VS Code y seleccionar "Reopen in Container", todo se instala automáticamente.
+- **Sin conflictos de versiones ni problemas de permisos**: El contenedor ya incluye Python, Node, dependencias y extensiones necesarias.
+- **Acceso a la app:**
+  - Frontend: [http://localhost:5173](http://localhost:5173)
+  - Backend (Swagger UI): [http://localhost:8000/docs](http://localhost:8000/docs)
+- **¿No usas el contenedor?** Puedes seguir las instrucciones manuales más abajo.
+
+Para detalles completos y solución de problemas, consulta la guía:
+[docs/Entorno-Docker-y-DevContainer.md](docs/Entorno-Docker-y-DevContainer.md)
+
+## Devcontainer: workspaceFolder automático
+
+El archivo `.devcontainer/devcontainer.json` está configurado para que el directorio de trabajo sea `/app` y el volumen se monte ahí. Si tras un rebuild el valor de `workspaceFolder` cambia, se corrige automáticamente gracias al script `.devcontainer/fix_workspacefolder.py`, que se ejecuta tras cada rebuild mediante el campo `postCreateCommand`.
+
+No necesitas hacer nada manualmente: si el valor vuelve a `/workspace`, el script lo corregirá a `/app`.

@@ -8,7 +8,6 @@ This module provides utilities to dynamically load and manage trading strategies
 # This monkeypatch is required because some pandas_ta indicators expect np.NaN to exist
 import pandas_ta as ta
 import logging
-import src.monkeypatch_numpy  # Ensures np.NaN exists if pandas_ta is used
 
 # Strategy 1: SMA Crossover (cross_sma)
 def cross_sma(df, fast, slow):
