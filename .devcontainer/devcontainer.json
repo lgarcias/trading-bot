@@ -1,9 +1,19 @@
 {
   "name": "Crypto Bot DevContainer",
+<<<<<<< HEAD
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/app",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+=======
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "workspaceFolder": "/app",
   "mounts": [
     "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+>>>>>>> origin/develop
   ],
   "customizations": {
     "vscode": {
@@ -24,5 +34,9 @@
     "--user",
     "root"
   ],
+<<<<<<< HEAD
+  "postCreateCommand": "cd frontend && npm install && cd .. && pip install -r requirements.txt"
+=======
   "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && cd frontend && npm install"
+>>>>>>> origin/develop
 }

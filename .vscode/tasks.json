@@ -14,6 +14,25 @@
       "command": "cd frontend; npm run dev",
       "group": "build",
       "problemMatcher": []
+    },
+    {
+      "label": "Start PostgreSQL (docker-compose)",
+      "type": "shell",
+      "command": "docker-compose up -d db",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Restart PostgreSQL (docker-compose)",
+      "type": "shell",
+      "command": "docker-compose restart db",
+      "group": "build"
+    },
+    {
+      "label": "Stop PostgreSQL (docker-compose)",
+      "type": "shell",
+      "command": "docker-compose stop db",
+      "group": "build"
     }
   ]
 }

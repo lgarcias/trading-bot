@@ -148,3 +148,5 @@ The `.devcontainer/devcontainer.json` file is configured so that the working dir
 
 ## 🗄️ PostgreSQL Integration Roadmap
 See [`docs/Postgres-Integration-Roadmap.md`](docs/Postgres-Integration-Roadmap.md) for a step-by-step plan to add PostgreSQL support to the app. This document explains how to migrate from file-based storage to a robust database backend, what changes are needed, and what future improvements are possible.
+
+For detailed working documentation and technical decisions, see the [PostgreSQL Integration Documentation](docs/postgres-integration/README.md).
