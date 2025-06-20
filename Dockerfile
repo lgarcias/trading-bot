@@ -4,11 +4,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Instala dependencias del sistema (si necesitas)
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential curl && rm -rf /var/lib/apt/lists/*
 
-# Copia solo requirements.txt e instala dependencias Python
+# Actualiza pip e instala dependencias Python
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # No copies el código fuente, el volumen lo montará
 
