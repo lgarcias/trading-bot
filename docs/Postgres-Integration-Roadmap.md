@@ -5,10 +5,24 @@ Implement a PostgreSQL database to support persistent storage for the applicatio
 
 ---
 
+## Documentation Index
+- [Data Model Design](postgres-integration/data-model.md)
+- [Migration Scripts](postgres-integration/migration-scripts.md)
+- [Backend Integration Guide](postgres-integration/backend-integration.md)
+- [Testing & Validation](postgres-integration/testing.md)
+- [Troubleshooting & FAQ](postgres-integration/troubleshooting.md)
+
+---
+
+> **Icon legend:**
+> - 🚧 Started
+> - ✅ Completed
+> - ⬜️ Not started
+
 ## 1. Planning and Preparation
-- **Review current data usage:** Identify all places where the app reads/writes data (e.g., CSVs in `data/`, logs, configs).
-- **Define data models:** Design tables for historical data, strategies, backtest results, user configs, etc.
-- **Decide migration scope:** Not all data may need to be migrated (see below).
+- ✅ Review current data usage: [see details](postgres-integration/PIR-data-usage-review.md)
+- 🚧 Define data models: [see details](postgres-integration/data-model.md)
+- ⬜️ Decide migration scope
 
 ---
 
